@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  bot:
+    container_name: donation_tracker_bot
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - ADMIN_CHAT_ID=${ADMIN_CHAT_ID}
+      - CALENDAR_ADMIN_ID=${CALENDAR_ADMIN_ID:-}
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@donation_tracker_db:5432/${POSTGRES_DB:-donation_tracker}?sslmode=disable
+      - TZ=Europe/Istanbul
+    networks:
+      - donation_tracker_network
+
+  db:
+    container_name: donation_tracker_db
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-donation_tracker}
+      - TZ=Europe/Istanbul
+    volumes:
+      - donation_tracker_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-donation_tracker}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - donation_tracker_network
+
+volumes:
+  donation_tracker_data:
+    name: donation_tracker_data
+
+networks:
+  donation_tracker_network:
+    name: donation_tracker_network
+    driver: bridge

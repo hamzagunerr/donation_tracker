@@ -1,0 +1,24 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment (container'da env var olarak geçilecek)
+.env
+
+# Docs
+README.md
+LICENSE
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+/bot
+*.exe
