@@ -425,3 +425,12 @@ func (db *DB) GetCalendarStats(ctx context.Context) (added int, notAdded int, er
 	err = db.pool.QueryRow(ctx, query).Scan(&added, &notAdded)
 	return
 }
+
+func (db *DB) ResetAll(ctx context.Context) error {
+	query := `
+		TRUNCATE TABLE donations RESTART IDENTITY;
+		TRUNCATE TABLE channels RESTART IDENTITY;
+	`
+	_, err := db.pool.Exec(ctx, query)
+	return err
+}

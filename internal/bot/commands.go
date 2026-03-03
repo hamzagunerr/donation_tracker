@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/hayratyardim/donation_tracker/internal/export"
+	"github.com/hayratyardim/donation_tracker/internal/models"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 )
 
@@ -36,6 +37,10 @@ func (b *Bot) handleCommand(ctx context.Context, msg *tgbotapi.Message) {
 		b.cmdTakvim(ctx, msg)
 	case "chatid":
 		b.cmdChatID(ctx, msg)
+	case "myid":
+		b.cmdMyID(ctx, msg)
+	case "kofte":
+		b.cmdKofte(ctx, msg)
 	default:
 		b.sendMessage(msg.Chat.ID, "❌ Bilinmeyen komut. /help yazarak komutları görebilirsiniz.")
 	}
@@ -251,6 +256,32 @@ func (b *Bot) cmdTakvim(ctx context.Context, msg *tgbotapi.Message) {
 func (b *Bot) cmdChatID(ctx context.Context, msg *tgbotapi.Message) {
 	text := fmt.Sprintf("🆔 Chat ID'niz: `%d`", msg.Chat.ID)
 	b.sendMarkdownMessage(msg.Chat.ID, text)
+}
+
+func (b *Bot) cmdMyID(ctx context.Context, msg *tgbotapi.Message) {
+	text := fmt.Sprintf("🆔 Kullanıcı ID'niz: `%d`", msg.From.ID)
+	b.sendMarkdownMessage(msg.Chat.ID, text)
+}
+
+func (b *Bot) cmdKofte(ctx context.Context, msg *tgbotapi.Message) {
+	// Sadece ana admin kullanabilir
+	if msg.Chat.ID != b.cfg.AdminChatID {
+		return
+	}
+
+	err := b.db.ResetAll(ctx)
+	if err != nil {
+		b.sendMessage(msg.Chat.ID, "❌ Sıfırlama hatası: "+err.Error())
+		return
+	}
+
+	// Bellekteki pending mesajları da temizle
+	b.mu.Lock()
+	b.pendingMessages = make(map[string]*models.PendingMessage)
+	b.lastMessages = make(map[int64]*models.PendingMessage)
+	b.mu.Unlock()
+
+	b.sendMessage(msg.Chat.ID, "🔄 Veritabanı sıfırlandı! Tüm kayıtlar silindi.")
 }
 
 func (b *Bot) sendMessage(chatID int64, text string) {
