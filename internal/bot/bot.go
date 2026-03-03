@@ -86,6 +86,12 @@ func (b *Bot) handleUpdate(ctx context.Context, update tgbotapi.Update) {
 			return
 		}
 
+		// /myid komutu herkes tarafından kullanılabilir
+		if update.Message.IsCommand() && update.Message.Command() == "myid" {
+			b.handleCommand(ctx, update.Message)
+			return
+		}
+
 		// Admin veya takvim admin'inin özel sohbetinden gelen komutlar
 		chatID := update.Message.Chat.ID
 		isAdmin := chatID == b.cfg.AdminChatID
